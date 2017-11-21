@@ -59,36 +59,22 @@ bot.on("message", function(message) {
         message.channel.send(`Added **${add}** points to user.`);
         }); 
             break;
-        case "ship":
-            message.channel.send("I ship <@" + message.guild.members.random().user.id + "> and <@" + message.guild.members.random().user.id + ">")
-
-            message.channel.send("**Recharging.**").then((message)=>{
-                message.edit("**Recharging..**")
-                    message.edit("**Recharging...**")
-                        message.edit("**Recharging.**")
-                            message.edit("**Recharging..**")
-                                message.edit("**Recharging...**")
-                                    message.edit("**Recharged!**")});
-            break;
-        case "shipme":
-            message.channel.send("I ship <@" + message.author.id + "> and <@" + message.guild.members.random().user.id + ">")
-
-            message.channel.send("**Recharging.**").then((message)=>{
-                message.edit("**Recharging..**")
-                    message.edit("**Recharging...**")
-                        message.edit("**Recharging.**")
-                            message.edit("**Recharging..**")
-                                message.edit("**Recharging...**")
-                                    message.edit("**Recharged!**")});
-            break;
         case "help":
-            message.author.send("Prefix: **/**\n**/points**,\n/**checkpoints** [mention],\n**/addpoints** [mention] [number],\n**/ping**,\n**/ship**")
+            message.author.send("Prefix: **/**\n**/points**,\n/**checkpoints** [mention],\n**/addpoints** [mention] [number],\n**/ping**,\n**/ship**\n**/ship me**")
             message.react("\❔");
             break;
         case "eval":
             let evall = args.slice(1).join(" ")
             message.delete();
             message.channel.send(eval(evall));
+            break;
+        case "ship":
+        let ship = "me"
+        if (ship) {
+            return message.channel.send("I ship <@" + message.author.id + "> and <@" + message.guild.members.random().user.id + ">");
+        } else {
+            message.channel.send("I ship <@" + message.guild.members.random().user.id + "> and <@" + message.guild.members.random().user.id + ">");
+        }
             break;
     }
 });
