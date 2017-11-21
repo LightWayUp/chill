@@ -81,6 +81,10 @@ bot.on("message", function(message) {
                                 message.edit("**Recharging...**")
                                     message.edit("**Recharged!**")});
             break;
+        case "help":
+            message.author.send("Prefix: **/**\n**/points**,\n/**checkpoints** [mention],\n**/addpoints** [mention] [number],\n**/ping**,\n**/ship**")
+            message.react("\❔");
+            break;
     }
 });
     
