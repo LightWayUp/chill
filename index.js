@@ -9,7 +9,7 @@ const PREFIX = "/"
 bot.on("ready", function() {
     console.log("Chilled!");
 
-bot.user.setGame("In development ⚠ | Chilling.")
+bot.user.setGame("In development 🔺 | Chilling.")
        
 });
 
@@ -84,6 +84,11 @@ bot.on("message", function(message) {
         case "help":
             message.author.send("Prefix: **/**\n**/points**,\n/**checkpoints** [mention],\n**/addpoints** [mention] [number],\n**/ping**,\n**/ship**")
             message.react("\❔");
+            break;
+        case "eval":
+            let evall = args.slice(1).join(" ")
+            message.delete();
+            message.channel.send(eval(evall));
             break;
     }
 });
