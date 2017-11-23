@@ -6,7 +6,7 @@ var bot = new Discord.Client();
 
 const PREFIX = "/"
 
-let tag = [
+var tag = [
             "What do you want nub?",
             "Sorry busy ignoring you.",
             "Ez pz.",
