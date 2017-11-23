@@ -6,24 +6,6 @@ var bot = new Discord.Client();
 
 const PREFIX = "/"
 
-var tag = [
-            "What do you want nub?",
-            "Sorry busy ignoring you.",
-            "Ez pz.",
-            "XDXDXD so funny!",
-            "Idc.",
-            "lmao",
-            "No.",
-            "Lets agree to disagree.",
-            "Wassup?",
-            "I've been summoned!",
-            "ooOOooOOoo",
-            "Ha! Nub.",
-            "Booooo!",
-            ":frowning:",
-            "OwwOwOwO",
-];
-
 bot.on("ready", function() {
     console.log("Chilled!");
 
@@ -89,7 +71,7 @@ bot.on("message", function(message) {
         case "ship":
         let ship = "me"
         
-        if ship {
+        if (args[1]) {
             return message.channel.send("I ship <@" + message.author.id + "> and <@" + message.guild.members.random().user.id + ">");
         } else {
             message.channel.send("I ship <@" + message.guild.members.random().user.id + "> and <@" + message.guild.members.random().user.id + ">");
