@@ -32,8 +32,7 @@ bot.user.setGame("In development 🔺 | Chilling.")
 });
 
 if (message.content.includes("<@" + bot.user.id + ">")
-    var e = tag[Math.floor(Math.random() * tag.length)];
-message.channel.send(e);
+message.channel.send(tag[Math.floor(Math.random() * tag.length)]);
     }
  
 
