@@ -6,15 +6,7 @@ var bot = new Discord.Client();
 
 const PREFIX = "/"
 
-bot.on("ready", function() {
-    console.log("Chilled!");
-
-bot.user.setGame("In development 🔺 | Chilling.")
-       
-});
-
-if (message.content.includes("<@" + bot.user.id + ">")
-    let tag = [
+let tag = [
             "What do you want nub?",
             "Sorry busy ignoring you.",
             "Ez pz.",
@@ -30,7 +22,16 @@ if (message.content.includes("<@" + bot.user.id + ">")
             "Booooo!",
             ":frowning:",
             "OwwOwOwO",
-        ];
+];
+
+bot.on("ready", function() {
+    console.log("Chilled!");
+
+bot.user.setGame("In development 🔺 | Chilling.")
+       
+});
+
+if (message.content.includes("<@" + bot.user.id + ">")
     let e = tag[Math.floor(Math.random() * tag.length)];
 message.channel.send(e);
     }
