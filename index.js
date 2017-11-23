@@ -71,8 +71,8 @@ bot.on("message", function(message) {
         case "ship":
         let ship = "me"
         
-        if (ship) {
-            message.channel.send("I ship <@" + message.author.id + "> and <@" + message.guild.members.random().user.id + ">");
+        if ship {
+            return message.channel.send("I ship <@" + message.author.id + "> and <@" + message.guild.members.random().user.id + ">");
         } else {
             message.channel.send("I ship <@" + message.guild.members.random().user.id + "> and <@" + message.guild.members.random().user.id + ">");
         }
