@@ -47,29 +47,6 @@ bot.on("message", function(message) {
                                     message.edit("**Pinging..**")
                                         message.edit("**Pong!** " + "`" + bot.ping.toFixed() + "ms" + "`")});
             break;
-         case "8ball":
-        var falsea = [
-            "**Mmmm, can't read that try again :wink:**",
-            "**boi, u gotta ask a question**:question:",
-            "**let me think. no..**",
-            "**Error: too dumb to be read**:clipboard:",
-            "**I can't read air**"
-        ];
-        var answers = [
-                "Yes",
-                "No",
-                "Maybe",
-                "I'm not google, how am I supposed to know?",
-                "idc",
-                "leave me alone",
-                "42",
-                "14-13",
-                "ew, i have a gf!"
-        ];
-                if (args[1]) message.channel.send(answers[Math.floor(Math.random() * answers.length)]);
-                
-                else message.channel.send(falsea[Math.floor(Math.random() * falsea.length)]);
-            break;
         case "points":
         economy.fetchBalance(message.author.id).then((i) => {
             const embed = new Discord.RichEmbed()
