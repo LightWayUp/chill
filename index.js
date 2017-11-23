@@ -60,7 +60,7 @@ bot.on("message", function(message) {
         }); 
             break;
         case "help":
-            message.author.send("Prefix: **/**\n**/points**,\n/**checkpoints** [mention],\n**/addpoints** [mention] [number],\n**/ping**,\n**/ship**\n**/ship me**")
+            message.channel.send("Prefix: **/**\n**/points**,\n/**checkpoints** [mention],\n**/addpoints** [mention] [number],\n**/ping**,\n**/ship**\n**/ship me\n**/remindme [time] [text]**")
             message.react("\❔");
             break;
         case "eval":
@@ -71,10 +71,28 @@ bot.on("message", function(message) {
         case "ship":
         let ship = "me"
         
-        if ship {
+        if (args[1]) {
             return message.channel.send("I ship <@" + message.author.id + "> and <@" + message.guild.members.random().user.id + ">");
         } else {
             message.channel.send("I ship <@" + message.guild.members.random().user.id + "> and <@" + message.guild.members.random().user.id + ">");
+        }
+            break;
+        case "remindme": //~~
+        let time = args[1]
+        let remind = message.content.split(" ").slice(2).join(" ");
+        
+        if (!args[1]) {
+            message.channel.send("Please provide a time in seconds, minutes, hours, days or months! Example: `/remindme 3d Do homework`")
+        }
+
+        if (!remind) {
+            message.channel.send("Please provide a text or a sentence to remind you for. Example: `/remindme 3d Do homework`")
+        }
+
+        if (args[1], remind) {
+        setTimeout(function() {
+            message.author.sendMessage(`:clock130: **DING!** Remind text: **${remind}**. Remind time set: **${ms(ms(time), {long: true})}**`);
+        }, ms(time));
         }
             break;
     }
