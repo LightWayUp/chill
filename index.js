@@ -13,6 +13,29 @@ bot.user.setGame("In development 🔺 | Chilling.")
        
 });
 
+if (message.content.includes("<@" + bot.user.id + ">")
+    let tag = [
+            "What do you want nub?",
+            "Sorry busy ignoring you.",
+            "Ez pz.",
+            "XDXDXD so funny!",
+            "Idc.",
+            "lmao",
+            "No.",
+            "Lets agree to disagree.",
+            "Wassup?",
+            "I've been summoned!",
+            "ooOOooOOoo",
+            "Ha! Nub.",
+            "Booooo!",
+            ":frowning:",
+            "OwwOwOwO",
+        ];
+    let e = tag[Math.floor(Math.random() * tag.length)];
+message.channel.send(e);
+    }
+ 
+
 bot.on("message", function(message) {
     if (message.author.equals(bot.user)) return;
 
@@ -28,6 +51,29 @@ bot.on("message", function(message) {
                                 message.edit("**Pinging.**")
                                     message.edit("**Pinging..**")
                                         message.edit("**Pong!** " + "`" + bot.ping.toFixed() + "ms" + "`")});
+            break;
+         case "8ball":
+        var falsea = [
+            "**Mmmm, can't read that try again :wink:**",
+            "**boi, u gotta ask a question**:question:",
+            "**let me think. no..**",
+            "**Error: too dumb to be read**:clipboard:",
+            "**I can't read air**"
+        ];
+        var answers = [
+                "Yes",
+                "No",
+                "Maybe",
+                "I'm not google, how am I supposed to know?",
+                "idc",
+                "leave me alone",
+                "42",
+                "14-13",
+                "ew, i have a gf!"
+        ];
+                if (args[1]) message.channel.send(answers[Math.floor(Math.random() * answers.length)]);
+                
+                else message.channel.send(falsea[Math.floor(Math.random() * falsea.length)]);
             break;
         case "points":
         economy.fetchBalance(message.author.id).then((i) => {
@@ -60,7 +106,7 @@ bot.on("message", function(message) {
         }); 
             break;
         case "help":
-            message.channel.send("Prefix: **/**\n**/points**,\n/**checkpoints** [mention],\n**/addpoints** [mention] [number],\n**/ping**,\n**/ship**\n**/ship me**\n**/remindme [time] [text]**")
+            message.author.send("Prefix: **/**\n**/points**,\n/**checkpoints** [mention],\n**/addpoints** [mention] [number],\n**/ping**,\n**/ship**\n**/ship me**")
             message.react("\❔");
             break;
         case "eval":
@@ -71,28 +117,10 @@ bot.on("message", function(message) {
         case "ship":
         let ship = "me"
         
-        if (args[1]) {
+        if ship {
             return message.channel.send("I ship <@" + message.author.id + "> and <@" + message.guild.members.random().user.id + ">");
         } else {
             message.channel.send("I ship <@" + message.guild.members.random().user.id + "> and <@" + message.guild.members.random().user.id + ">");
-        }
-            break;
-        case "remindme": //~~
-        let time = args[1]
-        let remind = message.content.split(" ").slice(2).join(" ");
-        
-        if (!args[1]) {
-            message.channel.send("Please provide a time in seconds, minutes, hours, days or months! Example: `/remindme 3d Do homework`")
-        }
-
-        if (!remind) {
-            message.channel.send("Please provide a text or a sentence to remind you for. Example: `/remindme 3d Do homework`")
-        }
-
-        if (args[1], remind) {
-        setTimeout(function() {
-            message.author.sendMessage(`:clock130: **DING!** Remind text: **${remind}**. Remind time set: **${ms(ms(time), {long: true})}**`);
-        }, ms(time));
         }
             break;
     }
