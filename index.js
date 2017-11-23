@@ -70,8 +70,9 @@ bot.on("message", function(message) {
             break;
         case "ship":
         let ship = "me"
+        
         if (ship) {
-            return message.channel.send("I ship <@" + message.author.id + "> and <@" + message.guild.members.random().user.id + ">");
+            message.channel.send("I ship <@" + message.author.id + "> and <@" + message.guild.members.random().user.id + ">");
         } else {
             message.channel.send("I ship <@" + message.guild.members.random().user.id + "> and <@" + message.guild.members.random().user.id + ">");
         }
