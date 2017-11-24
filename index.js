@@ -92,6 +92,7 @@ bot.on("message", function(message) {
         setTimeout(function() {
             message.author.sendMessage(`:clock130: **DING!** Remind text: **${remind}**. Remind time set: **${ms(ms(time), {long: true})}**`);
         }, ms(time));
+        message.channel.send("Timer set! :clock130:");
             break;
         case "give":
         let mention = message.mentions.members.first()
