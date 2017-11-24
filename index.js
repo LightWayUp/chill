@@ -60,7 +60,7 @@ bot.on("message", function(message) {
         }); 
             break;
         case "help":
-            message.author.send("Prefix: **/**\n**/points**,\n/**checkpoints** [mention],\n**/addpoints** [mention] [number],\n**/ping**,\n**/ship**\n**/ship me**\n**/remindme** [time] [text]")
+            message.author.send("Prefix: **/**\n**/points**,\n/**checkpoints** [mention],\n**/addpoints** [mention] [number],\n**/ping**,\n**/ship**\n**/ship me**\n**/remindme** [time] [text]\n**/give** [mention] [amount] [item]")
             message.react("\❔");
             break;
         case "eval":
@@ -94,6 +94,29 @@ bot.on("message", function(message) {
             message.author.sendMessage(`:clock130: **DING!** Remind text: **${remind}**. Remind time set: **${ms(ms(time), {long: true})}**`);
         }, ms(time));
         }
+            break;
+        case "give":
+        let mention = message.mentions.members.first()
+        let amount = args[2]
+        let item = message.content.split(" ").slice(3).join(" ");
+
+        if (!mention) {
+            return message.channel.send("Please mention someone.");
+        }
+
+        if (!item) {
+            return message.channel.send("Please provide an item.");
+        }
+
+        if (!amount) {
+            return message.channel.send("Please provide an amount.");
+        }
+
+        if (amount > 64) {
+            return message.channel.send("**64** is the max amount you can give to someone!");
+        }
+
+        message.channel.send(`<@${message.author.id}> gave **${mention}** **${amount}**x **${item}**.`);
             break;
     }
 });
