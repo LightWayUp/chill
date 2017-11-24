@@ -60,7 +60,7 @@ bot.on("message", function(message) {
         }); 
             break;
         case "help":
-            message.author.send("Prefix: **/**\n**/points**,\n/**checkpoints** [mention],\n**/addpoints** [mention] [number],\n**/ping**,\n**/ship**\n**/ship me**")
+            message.author.send("Prefix: **/**\n**/points**,\n/**checkpoints** [mention],\n**/addpoints** [mention] [number],\n**/ping**,\n**/ship**\n**/ship me**\n**/remindme** [time] [text]")
             message.react("\❔");
             break;
         case "eval":
