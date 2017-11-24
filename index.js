@@ -82,18 +82,16 @@ bot.on("message", function(message) {
         let remind = message.content.split(" ").slice(2).join(" ");
         
         if (!args[1]) {
-            message.channel.send("Please provide a time in seconds, minutes, hours, days or months! Example: `/remindme 3d Do homework`")
+            return message.channel.send("Please provide a time in seconds, minutes, hours, days or months! Example: `/remindme 3d Do homework`");
         }
 
         if (!remind) {
-            message.channel.send("Please provide a text or a sentence to remind you for. Example: `/remindme 3d Do homework`")
+            return message.channel.send("Please provide a text or a sentence to remind you for. Example: `/remindme 3d Do homework`");
         }
 
-        if (args[1], remind) {
         setTimeout(function() {
             message.author.sendMessage(`:clock130: **DING!** Remind text: **${remind}**. Remind time set: **${ms(ms(time), {long: true})}**`);
         }, ms(time));
-        }
             break;
         case "give":
         let mention = message.mentions.members.first()
