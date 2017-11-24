@@ -77,6 +77,24 @@ bot.on("message", function(message) {
             message.channel.send("I ship <@" + message.guild.members.random().user.id + "> and <@" + message.guild.members.random().user.id + ">");
         }
             break;
+        case "remindme":
+        let time = args[1]
+        let remind = message.content.split(" ").slice(2).join(" ");
+        
+        if (!args[1]) {
+            message.channel.send("Please provide a time in seconds, minutes, hours, days or months! Example: `/remindme 3d Do homework`")
+        }
+
+        if (!remind) {
+            message.channel.send("Please provide a text or a sentence to remind you for. Example: `/remindme 3d Do homework`")
+        }
+
+        if (args[1], remind) {
+        setTimeout(function() {
+            message.author.sendMessage(`:clock130: **DING!** Remind text: **${remind}**. Remind time set: **${ms(ms(time), {long: true})}**`);
+        }, ms(time));
+        }
+            break;
     }
 });
     
