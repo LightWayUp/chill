@@ -1,0 +1,16 @@
+{
+    "restartTimeout": 3000,
+    "presenceName": "In maintenance mode \ud83d\udd3a | Chilling.",
+    "prefix": "/",
+    "shipMaxAttempts": 10,
+    "listMaxEntries": 300,
+    "giveMaxAmount": 64,
+    "changelogFetchTimeout": 5000,
+    "developerIDs": [
+        "313314003562528768"
+    ],
+    "developmentGuildIDs": [
+        "511620513643364353"
+    ],
+    "developmentEnvironment": false
+}

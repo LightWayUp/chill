@@ -1,16 +1,46 @@
 {
   "name": "chillbot",
-  "version": "1.0.0",
-  "description": "Chill",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "version": "2.2.14",
+  "description": "Chill!",
+  "keywords": [
+    "discord",
+    "discord.js",
+    "bot",
+    "chill",
+    "chillbot",
+    "JavaScript",
+    "js"
+  ],
+  "homepage": "https://github.com/LightWayUp/chill",
+  "bugs": {
+    "url": "https://github.com/LightWayUp/chill/issues"
   },
-  "author": "andrew9090",
-  "license": "ISC",
+  "license": "MIT",
+  "author": {
+    "name": "VanishedApps",
+    "url": "https://github.com/VanishedApps"
+  },
+  "contributors": [
+    {
+      "name": "LightWayUp",
+      "email": "lightwayuplightwayup@gmail.com",
+      "url": "https://lightwayup.github.io/"
+    }
+  ],
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LightWayUp/chill.git"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"No test to run\" && exit 0"
+  },
   "dependencies": {
-    "discord-eco": "0.0.10",
-    "discord.js": "^11.2.1",
-    "ms": "^2.0.0"
+    "discord.js": "^11.4.2",
+    "ms": "^2.1.1"
+  },
+  "engines": {
+    "node": ">=11.0.0"
   }
 }
