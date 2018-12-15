@@ -32,6 +32,7 @@ const client = new Discord.Client();
 
 const childProcess = require("child_process");
 
+const unexpectedRestartIdentifier = "unexpected";
 const permissions = {
     addReactions: "ADD_REACTIONS",
     sendMessages: "SEND_MESSAGES",
@@ -41,7 +42,7 @@ const permissions = {
 process.on("uncaughtException", error => {
     handleGenerically(error);
     let shouldRestart = false;
-    if (process.env.RESTARTED === undefined) {
+    if (process.env.RESTARTED !== unexpectedRestartIdentifier) {
         for (const arg of process.argv) {
             if (arg === "restartOnFatalError") {
                 shouldRestart = true;
@@ -600,7 +601,7 @@ function exitProcess(exitCode, shouldRestart) {
                 }
                 newArgs.push(arg);
             }
-            process.env.RESTARTED = "true";
+            process.env.RESTARTED = exitCode === 0 ? "normal" : unexpectedRestartIdentifier;
             childProcess.spawn(newArgs[0], newArgs.slice(1), {
                 env: process.env,
                 stdio: "ignore",
@@ -811,11 +812,20 @@ function respondToNonCommands(message) {
 }
 
 function clientHasPermissionInChannel(permission, channel) {
-    if (!((typeof permission === "string" || permission instanceof String || permission instanceof Discord.Permissions || ((Array.isArray(permission) || !(permission === undefined || permission === null || permission.length === undefined)) && permission.length > 0 && (permission[0] instanceof Discord.Permissions || permission[0] instanceof String || typeof permission[0] === "string"))) && channel instanceof Discord.Channel)) {
+    if (!((typeof permission === "string" || permission instanceof String || permission instanceof Discord.Permissions || Array.isArray(permission)) && channel instanceof Discord.Channel)) {
         throw new TypeError("Incorrect type(s) for clientHasPermissionInChannel arguments!");
     }
+    let permissionFiltered = permission;
+    if (Array.isArray(permission)) {
+        if (permission.length !== 0) {
+            permissionFiltered = permission.filter(eachPermission => typeof eachPermission === "string" || eachPermission instanceof String || eachPermission instanceof Discord.Permissions);
+        }
+        if (permissionFiltered.length === 0) {
+            throw new TypeError("Incorrect type(s) for clientHasPermissionInChannel arguments!");
+        }
+    }
     const permissionsForClient = channel.permissionsFor(client.user);
-    return permissionsForClient.has(permission) || permissionsForClient.has(permissions.administrator);
+    return permissionsForClient.has(permissionFiltered) || permissionsForClient.has(permissions.administrator);
 }
 
 function code(string) {
