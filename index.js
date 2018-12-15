@@ -461,21 +461,14 @@ client.on("ready", () => {
                 }
                 let messageToSend;
                 let tagName;
-                if (args.length > 2) {
-                    messageToSend = "Tag name must be in a format of \"a.b.c\" or \"va.b.c\" (where a, b, c are numbers), without any leading 0s!";
-                } else if (args.length === 2) {
-                    if (!/^v?((0|([1-9]\d*))\.){2}(0|([1-9]\d*))$/gi.test(args[1])) {
-                        messageToSend = "Tag name must be in a format of \"a.b.c\" or \"va.b.c\" (where a, b, c are numbers), without any leading 0s!";
-                    } else {
-                        tagName = args[1].toLowerCase();
-                        if (!tagName.startsWith("v")) {
-                            tagName = `v${tagName}`;
-                        }
-                    }
-                }
-                if (messageToSend !== undefined) {
+                if (!/^v?((0|([1-9]\d*))\.){2}(0|([1-9]\d*))(\-((alpha)|(beta)|(rc))([1-9]\d*))?$/gi.test(args[1])) {
+                    messageToSend = "Tag name must be in a format of \"a.b.c\" or \"va.b.c\" (where a, b, c are numbers) with optional suffix for alpha, beta and rc releases, without any leading 0s!";
                     return message.reply(messageToSend)
                         .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
+                }
+                tagName = args[1].toLowerCase();
+                if (!tagName.startsWith("v")) {
+                    tagName = `v${tagName}`;
                 }
                 messageToSend = "Fetching changelog...";
                 await channel.send(messageToSend)
