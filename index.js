@@ -430,7 +430,7 @@ client.on("ready", () => {
                 for (const libraryEntry of libraryMap) {
                     const library = libraryEntry[0];
                     const libraryVersion = libraryEntry[1];
-                    let messageToSend = libraryVersion === "" ? `**${library}**\nLicense:` : `**${library}**\nVersion: ${libraryVersion}\nLicense:`;
+                    let messageToSend = libraryVersion === "" ? `${bold(library)}\nLicense:` : `${bold(library)}\nVersion: ${libraryVersion}\nLicense:`;
                     await channel.send(messageToSend, sendOptionsForLongMessage)
                         .then(async message => {
                             messageToSend = require(`./licenses/${library}.js`).license;
