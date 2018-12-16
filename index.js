@@ -321,7 +321,9 @@ client.on("ready", () => {
                 } else {
                     target = getFirstMentionedUser(message);
                     if (target === undefined) {
-                        messageToSend = `Please mention someone!`;
+                        messageToSend = "Please mention someone!";
+                    } else if (target.user.equals(author)) {
+                        messageToSend = "You can't give items to yourself!";
                     } else if (!(args[1] === createMentionForUser(target.user) || args[1] === createMentionForUser(target.user, true))) {
                         messageToSend = "The syntax is /give <mention> <amount> <item>!";
                     } else if (args.length === 2) {
@@ -461,14 +463,17 @@ client.on("ready", () => {
                 }
                 let messageToSend;
                 let tagName;
-                if (!/^v?((0|([1-9]\d*))\.){2}(0|([1-9]\d*))(\-((alpha)|(beta)|(rc))([1-9]\d*))?$/gi.test(args[1])) {
-                    messageToSend = "Tag name must be in a format of \"a.b.c\" or \"va.b.c\" (where a, b, c are numbers) with optional suffix for alpha, beta and rc releases, without any leading 0s!";
-                    return message.reply(messageToSend)
-                        .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
-                }
-                tagName = args[1].toLowerCase();
-                if (!tagName.startsWith("v")) {
-                    tagName = `v${tagName}`;
+                if (args.length > 1) {
+                    if (/^v?((0|([1-9]\d*))\.){2}(0|([1-9]\d*))(\-((alpha)|(beta)|(rc))([1-9]\d*))?$/gi.test(args[1])) {
+                        tagName = args[1].toLowerCase();
+                        if (!tagName.startsWith("v")) {
+                            tagName = `v${tagName}`;
+                        }
+                    } else {
+                        messageToSend = "Tag name must be in a format of \"a.b.c\" or \"va.b.c\" (where a, b, c are numbers) with optional suffix for alpha, beta and rc releases, without any leading 0s!";
+                        return message.reply(messageToSend)
+                            .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
+                    }
                 }
                 messageToSend = "Fetching changelog...";
                 await channel.send(messageToSend)
