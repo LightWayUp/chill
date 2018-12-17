@@ -570,7 +570,7 @@ function handleGenerically(error, channel) {
         }
         console.error(error.toString());
         console.trace();
-        if (!(client === undefined || client === null || channel === undefined || channel === null) && canSendMessages) {
+        if (!(client === undefined || client === null || channel === undefined || channel === null) && clientHasPermissionInChannel(permissions.sendMessages, channel)) {
             const messageToSend = "Sorry, an error occured."
             channel.send(messageToSend)
             .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
@@ -800,7 +800,7 @@ function respondToNonCommands(message) {
         throw new TypeError("Incorrect type for respondToNonCommands argument!");
     }
     const channel = message.channel;
-    if (hasMentionForUser(message, client.user) && canSendMessages) {
+    if (hasMentionForUser(message, client.user) && clientHasPermissionInChannel(permissions.sendMessages, channel)) {
         let messageToSend = getRandomFromArray(response.mentioned);
         if (developmentEnvironment && !isSentInDevelopmentGuild(message)) {
             messageToSend = botUnavailableString;
