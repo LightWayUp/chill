@@ -195,12 +195,13 @@ client.on("ready", () => {
             return respondToNonCommands(message);
         }
 
+        const canSendMessages = clientHasPermissionInChannel(permissions.sendMessages, channel);
         const shouldReject = developmentEnvironment && !isSentInDevelopmentGuild(message);
         const args = substring.split(/\s+/gi);
         switch (args[0].toLowerCase()) {
 
             case "help": {
-                if (!clientHasPermissionInChannel(permissions.sendMessages, channel) || shouldReject) {
+                if (!canSendMessages || shouldReject) {
                     return;
                 }
                 channel.send(helpString)
@@ -218,7 +219,7 @@ client.on("ready", () => {
             }
 
             case "ping": {
-                if (!clientHasPermissionInChannel(permissions.sendMessages, channel) || shouldReject) {
+                if (!canSendMessages || shouldReject) {
                     return;
                 }
                 const ping = client.ping;
@@ -239,7 +240,7 @@ client.on("ready", () => {
             }
 
             case "ship": {
-                if (!clientHasPermissionInChannel(permissions.sendMessages, channel) || shouldReject) {
+                if (!canSendMessages || shouldReject) {
                     return;
                 }
                 const firstUser = (args.length >= 2 && args[1].toLowerCase() === "me") ? author : message.guild.members.random().user;
@@ -282,7 +283,7 @@ client.on("ready", () => {
                         messageToSend = `Please provide a value to remind you for. Example: ${code("/remindme 3d Do homework")}`;
                     }
                 }
-                if (messageToSend !== undefined && clientHasPermissionInChannel(permissions.sendMessages, channel)) {
+                if (messageToSend !== undefined && canSendMessages) {
                     return message.reply(messageToSend)
                         .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
                 }
@@ -291,7 +292,7 @@ client.on("ready", () => {
                 }
                 const matched = getMatchedOriginalFromArgs(message, args, 2);
                 const reminder = matched === null ? args.slice(2).join(" ") : message.content.substring(matched.length);
-                if (clientHasPermissionInChannel(permissions.sendMessages, channel)) {
+                if (canSendMessages) {
                     messageToSend = "Timer set! \ud83d\udd5c";
                     channel.send(messageToSend)
                     .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
@@ -299,7 +300,7 @@ client.on("ready", () => {
                 messageToSend = `\ud83d\udd5c ${bold("DING!")} Reminder text: ${bold(reminder)}. Reminder time set: ${bold(ms(timeout, {long: true}))}`;
                 reminderTimerList.push(setTimeout(() => author.send(messageToSend, sendOptionsForLongMessage)
                         .catch(error => {
-                            if (clientHasPermissionInChannel(permissions.sendMessages, channel)) {
+                            if (canSendMessages) {
                                 message.reply(dmUnavailableString)
                                 .catch(error => console.error(`An error occured while replying "${dmUnavailableString}" to message!\n\nFull details:\n${error.toString()}`));
                             }
@@ -309,7 +310,7 @@ client.on("ready", () => {
             }
 
             case "give": {
-                if (!clientHasPermissionInChannel(permissions.sendMessages, channel) || shouldReject) {
+                if (!canSendMessages || shouldReject) {
                     return;
                 }
                 let messageToSend;
@@ -359,7 +360,7 @@ client.on("ready", () => {
 
             case "eightball":
             case "8ball": {
-                if (!clientHasPermissionInChannel(permissions.sendMessages, channel) || shouldReject) {
+                if (!canSendMessages || shouldReject) {
                     return;
                 }
                 let messageToSend;
@@ -378,7 +379,7 @@ client.on("ready", () => {
             case "github":
             case "repo":
             case "repository": {
-                if (!clientHasPermissionInChannel(permissions.sendMessages, channel) || shouldReject) {
+                if (!canSendMessages || shouldReject) {
                     return;
                 }
                 channel.send(repositoryString)
@@ -390,7 +391,7 @@ client.on("ready", () => {
                 if (shouldReject) {
                     return;
                 }
-                if (!isDeveloper(author) && clientHasPermissionInChannel(permissions.sendMessages, channel)) {
+                if (!isDeveloper(author) && canSendMessages) {
                     const messageToSend = "You don't have permission to stop ChillBot!";
                     return message.reply(messageToSend)
                         .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
@@ -403,7 +404,7 @@ client.on("ready", () => {
                 if (shouldReject) {
                     return;
                 }
-                if (!isDeveloper(author) && clientHasPermissionInChannel(permissions.sendMessages, channel)) {
+                if (!isDeveloper(author) && canSendMessages) {
                     const messageToSend = "You don't have permission to restart ChillBot!";
                     return message.reply(messageToSend)
                         .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
@@ -414,7 +415,7 @@ client.on("ready", () => {
 
             case "osslicenses":
             case "opensourcelicenses": {
-                if (!clientHasPermissionInChannel(permissions.sendMessages, channel) || shouldReject) {
+                if (!canSendMessages || shouldReject) {
                     return;
                 }
                 const guildID = message.guild.id;
@@ -458,7 +459,7 @@ client.on("ready", () => {
             case "changes":
             case "changelog":
             case "changelogs": {
-                if (!clientHasPermissionInChannel(permissions.sendMessages, channel) || shouldReject) {
+                if (!canSendMessages || shouldReject) {
                     return;
                 }
                 let messageToSend;
@@ -545,7 +546,7 @@ client.on("ready", () => {
             }
 
             case "invite": {
-                if (!clientHasPermissionInChannel(permissions.sendMessages, channel) || shouldReject) {
+                if (!canSendMessages || shouldReject) {
                     return;
                 }
                 channel.send(inviteString)
@@ -569,7 +570,7 @@ function handleGenerically(error, channel) {
         }
         console.error(error.toString());
         console.trace();
-        if (!(client === undefined || client === null || channel === undefined || channel === null) && clientHasPermissionInChannel(permissions.sendMessages, channel)) {
+        if (!(client === undefined || client === null || channel === undefined || channel === null) && canSendMessages) {
             const messageToSend = "Sorry, an error occured."
             channel.send(messageToSend)
             .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
@@ -799,7 +800,7 @@ function respondToNonCommands(message) {
         throw new TypeError("Incorrect type for respondToNonCommands argument!");
     }
     const channel = message.channel;
-    if (hasMentionForUser(message, client.user) && clientHasPermissionInChannel(permissions.sendMessages, channel)) {
+    if (hasMentionForUser(message, client.user) && canSendMessages) {
         let messageToSend = getRandomFromArray(response.mentioned);
         if (developmentEnvironment && !isSentInDevelopmentGuild(message)) {
             messageToSend = botUnavailableString;
