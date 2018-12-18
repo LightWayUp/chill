@@ -148,7 +148,7 @@ libraryMap.set("async-limiter", "")
 .set("ws", "");
 
 if (process.env.RESTARTED !== undefined) {
-    console.log(`This process was started by the previous process.`);
+    console.log("This process was started by the previous process.");
     if (restartTimeout >= 1000) {
         const timeoutInSeconds = Math.floor(restartTimeout / 1000);
         let waitString = ".".repeat(timeoutInSeconds);
@@ -176,7 +176,7 @@ client.on("ready", () => {
             url: "https://www.twitch.tv/",
             type: "PLAYING"
         }
-    }).catch(error => console.error(`An error occured while setting presence!\n\nFull details:\n${error.toString()}`));
+    }).catch(error => console.error(`An error occured while setting presence!\n\nFull details:\n${error}`));
     console.log("Chilled!");
 }).on("message", async message => {
     const author = message.author;
@@ -208,13 +208,13 @@ client.on("ready", () => {
                 .then(sent => {
                     if (clientHasPermissionInChannel(permissions.addReactions, channel)) {
                         message.react("\u2754")
-                        .catch(error => console.error(`An error occured while reacting to message "${message.content}"!\n\nFull details:\n${error.toString()}`));
+                        .catch(error => console.error(`An error occured while reacting to message "${message.content}"!\n\nFull details:\n${error}`));
                     } else {
                         const messageToSend = `Permission ${permissions.addReactions} is needed to add reactions!`;
                         channel.send(messageToSend)
-                        .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
+                        .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
                     }
-                }, error => console.error(`An error occured while sending message "${helpString}"!\n\nFull details:\n${error.toString()}`));
+                }, error => console.error(`An error occured while sending message "${helpString}"!\n\nFull details:\n${error}`));
                 break;
             }
 
@@ -230,12 +230,12 @@ client.on("ready", () => {
                         .then(message => message.edit(bold("Pinging."))
                             .then(message => message.edit(bold("Pinging.."))
                                 .then(message => message.edit(`${bold("Pong!")} ${code(`${ping < 0 ? "0" : ping.toFixed()} ms`)}`)
-                                    .catch(error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error.toString()}`)),
-                                error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error.toString()}`)),
-                            error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error.toString()}`)),
-                        error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error.toString()}`)),
-                    error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error.toString()}`)),
-                error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
+                                    .catch(error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error}`)),
+                                error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error}`)),
+                            error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error}`)),
+                        error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error}`)),
+                    error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error}`)),
+                error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
                 break;
             }
 
@@ -257,7 +257,7 @@ client.on("ready", () => {
                     messageToSend = `I ship ${createMentionForUser(firstUser)} with ${createMentionForUser(randomSecondUser)}`;
                 }
                 channel.send(messageToSend)
-                .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
+                .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
                 break;
             }
 
@@ -285,7 +285,7 @@ client.on("ready", () => {
                 }
                 if (messageToSend !== undefined && canSendMessages) {
                     return message.reply(messageToSend)
-                        .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
+                        .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error}`));
                 }
                 if (reminderTimerList.length >= listMaxEntries && listMaxEntries > 0) {
                     clearTimeout(reminderTimerList.shift());
@@ -295,16 +295,16 @@ client.on("ready", () => {
                 if (canSendMessages) {
                     messageToSend = "Timer set! \ud83d\udd5c";
                     channel.send(messageToSend)
-                    .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
+                    .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
                 }
                 messageToSend = `\ud83d\udd5c ${bold("DING!")} Reminder text: ${bold(reminder)}. Reminder time set: ${bold(ms(timeout, {long: true}))}`;
                 reminderTimerList.push(setTimeout(() => author.send(messageToSend, sendOptionsForLongMessage)
                         .catch(error => {
                             if (canSendMessages) {
                                 message.reply(dmUnavailableString)
-                                .catch(error => console.error(`An error occured while replying "${dmUnavailableString}" to message!\n\nFull details:\n${error.toString()}`));
+                                .catch(error => console.error(`An error occured while replying "${dmUnavailableString}" to message!\n\nFull details:\n${error}`));
                             }
-                            console.error(`An error occured while sending message "${messageToSend}" in DM!\n\nFull details:\n${error.toString()}`);
+                            console.error(`An error occured while sending message "${messageToSend}" in DM!\n\nFull details:\n${error}`);
                         }), timeout));
                 break;
             }
@@ -350,11 +350,11 @@ client.on("ready", () => {
                 }
                 if (messageToSend !== undefined) {
                     return message.reply(messageToSend)
-                        .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
+                        .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error}`));
                 }
                 messageToSend = `${createMentionForUser(author)} gave ${createMentionForUser(target.user)} ${bold(amount)}x ${bold(item)}(s)`;
                 channel.send(messageToSend, sendOptionsForLongMessage)
-                .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
+                .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
                 break;
             }
 
@@ -367,11 +367,11 @@ client.on("ready", () => {
                 if (args.length === 1) {
                     messageToSend = bold(getRandomFromArray(response.eightBall.prompts));
                     return message.reply(messageToSend)
-                        .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
+                        .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error}`));
                 }
                 messageToSend = getRandomFromArray(response.eightBall.answers);
                 channel.send(messageToSend)
-                .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
+                .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
                 break;
             }
 
@@ -383,7 +383,7 @@ client.on("ready", () => {
                     return;
                 }
                 channel.send(repositoryString)
-                .catch(error => console.error(`An error occured while sending message "${repositoryString}"!\n\nFull details:\n${error.toString()}`));
+                .catch(error => console.error(`An error occured while sending message "${repositoryString}"!\n\nFull details:\n${error}`));
                 break;
             }
 
@@ -394,7 +394,7 @@ client.on("ready", () => {
                 if (!isDeveloper(author) && canSendMessages) {
                     const messageToSend = "You don't have permission to stop ChillBot!";
                     return message.reply(messageToSend)
-                        .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
+                        .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error}`));
                 }
                 exitProcess(0, false);
                 break;
@@ -407,7 +407,7 @@ client.on("ready", () => {
                 if (!isDeveloper(author) && canSendMessages) {
                     const messageToSend = "You don't have permission to restart ChillBot!";
                     return message.reply(messageToSend)
-                        .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
+                        .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error}`));
                 }
                 exitProcess(0, true);
                 break;
@@ -422,7 +422,7 @@ client.on("ready", () => {
                 if (licenseInfoSentGuildList.has(guildID)) {
                     const messageToSend = `This command has been used in the server recently. Jump to the message: ${licenseInfoSentGuildList.get(guildID)[0]}`;
                     return message.reply(messageToSend)
-                        .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
+                        .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error}`));
                 }
                 if (licenseInfoSentGuildList.size >= listMaxEntries && listMaxEntries > 0) {
                     const firstItemKey = licenseInfoSentGuildList.keys().next().value;
@@ -447,11 +447,11 @@ client.on("ready", () => {
                                     messageToSend = messageToSend.substring(splitableIndex + 1);
                                 }
                                 await channel.send(partialMessage, {code: true})
-                                    .catch(error => console.error(`An error occured while sending message "${partialMessage}"!\n\nFull details:\n${error.toString()}`));
+                                    .catch(error => console.error(`An error occured while sending message "${partialMessage}"!\n\nFull details:\n${error}`));
                             }
                             await channel.send(messageToSend, {code: true})
-                                .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
-                        }, error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
+                                .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
+                        }, error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
                 }
                 break;
             }
@@ -473,12 +473,12 @@ client.on("ready", () => {
                     } else {
                         messageToSend = "Tag name must be in a format of \"a.b.c\" or \"va.b.c\" (where a, b, c are numbers) with optional suffix for alpha, beta and rc releases, without any leading 0s!";
                         return message.reply(messageToSend)
-                            .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
+                            .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error}`));
                     }
                 }
                 messageToSend = "Fetching changelog...";
                 await channel.send(messageToSend)
-                    .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
+                    .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
                 https.get(`${changelogBaseURL}${tagName !== undefined ? `tags/${tagName}`: "latest"}`, {
                     headers: {
                         "User-Agent": "ChillBot"
@@ -492,29 +492,29 @@ client.on("ready", () => {
                         if (statusCode === 404 && tagName !== undefined) {
                             messageToSend = `Sorry, the specified tag name ${tagName} does not correspond to any release!`;
                             return message.reply(messageToSend)
-                                .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error.toString()}`));
+                                .catch(error => console.error(`An error occured while replying "${messageToSend}" to message!\n\nFull details:\n${error}`));
                         }
-                        console.error(`Unable to get changelog, server responded with status code ${statusCode.toString()}!`);
+                        console.error(`Unable to get changelog, server responded with status code ${statusCode}!`);
                         return channel.send(errorFetchingChangelogString)
-                            .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error.toString()}`));
+                            .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error}`));
                     }
                     if (!(/^application\/.*json/gi.test(response.headers[contentType]))) {
                         response.resume();
                         console.error(`Unable to get changelog, response ${contentType} does not match "application/json"!`);
                         return channel.send(errorFetchingChangelogString)
-                            .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error.toString()}`));
+                            .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error}`));
                     }
                     let raw = "";
                     response.on("data", chunk => raw += chunk)
                     .on("error", error => {
-                        console.error(`An error occured while attempting to fetch changelog!\n\nFull details:${error.toString()}`);
+                        console.error(`An error occured while attempting to fetch changelog!\n\nFull details:${error}`);
                         return channel.send(errorFetchingChangelogString)
-                            .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error.toString()}`));
+                            .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error}`));
                     }).on("end", () => {
                         if (!response.complete) {
                             console.error("Unable to get changelog, connection was terminated while response was still not fully received!");
                             return channel.send(errorFetchingChangelogString)
-                                .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error.toString()}`));
+                                .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error}`));
                         }
                         try {
                             const parsed = JSON.parse(raw);
@@ -522,7 +522,7 @@ client.on("ready", () => {
                             if (parsedDescription === undefined) {
                                 console.error("Unable to obtain changelog from parsed JSON!");
                                 return channel.send(errorFetchingChangelogString)
-                                    .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error.toString()}`));
+                                    .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error}`));
                             }
                             const description = parsedDescription.replace(/\r/gi, "");
                             const parsedName = parsed.name;
@@ -534,11 +534,11 @@ client.on("ready", () => {
                                 split: {
                                     maxLength: maxSafeMessageLength
                                 }
-                            }).catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
+                            }).catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
                         } catch (error) {
                             console.error("Unable to get changelog, received data is not valid JSON!");
                             channel.send(errorFetchingChangelogString)
-                            .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error.toString()}`));
+                            .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error}`));
                         }
                     })
                 });
@@ -550,7 +550,7 @@ client.on("ready", () => {
                     return;
                 }
                 channel.send(inviteString)
-                .catch(error => console.error(`An error occured while sending message "${inviteString}"!\n\nFull details:\n${error.toString()}`));
+                .catch(error => console.error(`An error occured while sending message "${inviteString}"!\n\nFull details:\n${error}`));
                 break;
             }
 
@@ -568,15 +568,15 @@ function handleGenerically(error, channel) {
         if (!(error instanceof Error && (channel === undefined || channel === null || channel instanceof Discord.Channel))) {
             throw new TypeError("Incorrect type(s) for handleGenerically arguments!");
         }
-        console.error(error.toString());
+        console.error(error);
         console.trace();
         if (!(client === undefined || client === null || channel === undefined || channel === null) && clientHasPermissionInChannel(permissions.sendMessages, channel)) {
             const messageToSend = "Sorry, an error occured."
             channel.send(messageToSend)
-            .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
+            .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
         }
     } catch (error) {
-        console.error(error.toString());
+        console.error(error);
     }
 }
 
@@ -607,15 +607,15 @@ function exitProcess(exitCode, shouldRestart) {
                 detached: process.platform === "win32",
                 shell: true
             }).unref();
-            console.log(`Restarting process...`);
+            console.log("Restarting process...");
         } else {
             console.log("Goodbye, chill!");
         }
         if (!(client === undefined || client === null || client.user === undefined || client.user === null)) {
             client.user.setStatus("invisible")
             .then(clientUser => client.destroy()
-                .catch(error => console.error(`An error occured while logging out!\n\nFull details:\n${error.toString()}`)),
-            error => console.error(`An error occured while setting status!\n\nFull details:\n${error.toString()}`));
+                .catch(error => console.error(`An error occured while logging out!\n\nFull details:\n${error}`)),
+            error => console.error(`An error occured while setting status!\n\nFull details:\n${error}`));
         }
         process.exit(exitCode);
     } catch (error) {
@@ -792,7 +792,7 @@ function bold(string) {
 
 function login() {
     client.login(token)
-    .catch(error => console.error(`An error occured while logging in! Token is ${developmentEnvironment ? token : "a secret"}!\n\nFull details:\n${error.toString()}`));
+    .catch(error => console.error(`An error occured while logging in! Token is ${developmentEnvironment ? token : "a secret"}!\n\nFull details:\n${error}`));
 }
 
 function respondToNonCommands(message) {
@@ -806,7 +806,7 @@ function respondToNonCommands(message) {
             messageToSend = botUnavailableString;
         }
         channel.send(messageToSend)
-        .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error.toString()}`));
+        .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
     }
 }
 
