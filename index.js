@@ -55,6 +55,7 @@ process.on("uncaughtException", error => {
 
 const ms = require("ms");
 const https = require("https");
+const path = require("path");
 
 const packageJSON = require("./package.json");
 const configuration = require("./configurations/configuration.json");
@@ -72,6 +73,8 @@ const developerIDs = getConfiguration("developerIDs");
 const developmentGuildIDs = getConfiguration("developmentGuildIDs");
 const token = getConfiguration("token");
 const developmentEnvironment = getConfiguration("developmentEnvironment");
+const cliProcessTimeout = getConfiguration("cliProcessTimeout");
+const libraryMap = getLibraries();
 const remindmeMaxTimeStringLength = 100;
 // 100 is the limit for ms library, see https://github.com/zeit/ms/blob/2.1.1/index.js#L50
 const licenseInfoCooldown = 1000 * 60 * 30;
@@ -133,19 +136,6 @@ const response = {
         "OwOwOwOwO"
     ]
 };
-
-const libraryMap = new Map()
-    .set("node", process.version)
-    .set("npm", "");
-for (const library in packageJSON.dependencies) {
-    libraryMap.set(library, packageJSON.dependencies[library]);
-}
-libraryMap.set("async-limiter", "")
-.set("long", "")
-.set("prism-media", "")
-.set("snekfetch", "")
-.set("tweetnacl-js", "")
-.set("ws", "");
 
 if (process.env.RESTARTED !== undefined) {
     console.log("This process was started by the previous process.");
@@ -507,9 +497,9 @@ client.on("ready", () => {
                     let raw = "";
                     response.on("data", chunk => raw += chunk)
                     .on("error", error => {
-                        console.error(`An error occured while attempting to fetch changelog!\n\nFull details:${error}`);
-                        return channel.send(errorFetchingChangelogString)
-                            .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error}`));
+                        console.error(`An error occured while attempting to fetch changelog!\n\nFull details:\n${error}`);
+                        channel.send(errorFetchingChangelogString)
+                        .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error}`));
                     }).on("end", () => {
                         if (!response.complete) {
                             console.error("Unable to get changelog, connection was terminated while response was still not fully received!");
@@ -602,7 +592,6 @@ function exitProcess(exitCode, shouldRestart) {
             }
             process.env.RESTARTED = exitCode === 0 ? "normal" : unexpectedRestartIdentifier;
             childProcess.spawn(newArgs[0], newArgs.slice(1), {
-                env: process.env,
                 stdio: "ignore",
                 detached: process.platform === "win32",
                 shell: true
@@ -637,8 +626,8 @@ function getConfiguration(configurationType) {
             if (!(typeof result === "number" && isInteger(result.toString()))) {
                 throw new TypeError("Invalid restartTimeout value!");
             }
-            if (result < 0) {
-                throw new Error("Invalid restartTimeout value, restartTimeout must not be less than 0!");
+            if (result <= 0) {
+                throw new Error("Invalid restartTimeout value, restartTimeout must not be less than or equal to 0!");
             }
             break;
         }
@@ -700,8 +689,8 @@ function getConfiguration(configurationType) {
             if (!(typeof result === "number" && isInteger(result.toString()))) {
                 throw new TypeError("Invalid changelogFetchTimeout value!");
             }
-            if (result < 0) {
-                throw new Error("Invalid changelogFetchTimeout value, changelogFetchTimeout must not be less than 0!");
+            if (result <= 0) {
+                throw new Error("Invalid changelogFetchTimeout value, changelogFetchTimeout must not be less than or equal to 0!");
             }
             break;
         }
@@ -776,11 +765,56 @@ function getConfiguration(configurationType) {
             break;
         }
 
+        case "cliProcessTimeout": {
+            if (result === useProcessEnvIdentifier) {
+                result = parseInt(process.env.BOT_CLI_PROCESS_TIMEOUT, 10);
+            }
+            if (!(typeof result === "number" && isInteger(result.toString()))) {
+                throw new TypeError("Invalid cliProcessTimeout value!");
+            }
+            if (result <= 0) {
+                throw new Error("Invalid cliProcessTimeout value, cliProcessTimeout must not be less than or equal to 0!");
+            }
+            break;
+        }
+
         default: {
             throw new Error("Invalid configuration to fetch!");
         }
     }
     return result;
+}
+
+function getLibraries() {
+    const map = new Map().set("node", process.version);
+    let npmPath = path.resolve(path.dirname(process.argv[0]), (process.platform === "win32" ? "./npm.cmd" : "./npm"));
+    if (npmPath.includes(" ")) {
+        npmPath = `"${npmPath}"`;
+    }
+    const npmProcess = childProcess.spawnSync(npmPath, ["-v"], {
+        timeout: cliProcessTimeout,
+        shell: true,
+        windowsHide: true
+    });
+    let npmVersion = "";
+    if (npmProcess.error !== undefined && npmProcess.error !== null) {
+        console.error(`An error occured while attempting to read stdout of NPM process!\n\nFull details:\n${npmProcess.error}`);
+    } else {
+        const bufferString = npmProcess.stdout.toString();
+        if (/^\s*(\d+\.){2}\d+\s*$/gi.test(bufferString)) {
+            npmVersion = bufferString.trim();
+        }
+    }
+    map.set("npm", npmVersion);
+    for (const library in packageJSON.dependencies) {
+        map.set(library, packageJSON.dependencies[library]);
+    }
+    return map.set("async-limiter", "")
+    .set("long", "")
+    .set("prism-media", "")
+    .set("snekfetch", "")
+    .set("tweetnacl-js", "")
+    .set("ws", "");
 }
 
 function bold(string) {

@@ -12,5 +12,6 @@
     "developmentGuildIDs": [
         "511620513643364353"
     ],
-    "developmentEnvironment": false
+    "developmentEnvironment": false,
+    "cliProcessTimeout": 5000
 }
