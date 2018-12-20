@@ -892,10 +892,7 @@ function getFirstMentionedUser(message) {
         throw new TypeError("Incorrect type for getFirstMentionedUser argument!");
     }
     const mentionsCollection = message.mentions.members;
-    if (mentionsCollection.length <= 0) {
-        return;
-    }
-    return mentionsCollection.first();
+    return mentionsCollection.length === 0 ? undefined : mentionsCollection.first();
 }
 
 function isInteger(string, acceptSign) {
