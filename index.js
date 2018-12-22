@@ -56,8 +56,10 @@ process.on("uncaughtException", error => {
 const ms = require("ms");
 const https = require("https");
 const path = require("path");
+const fs = require("fs");
+const url = require("url");
 
-const packageJSON = require("./package.json");
+const chillPackageJson = require("./package.json");
 const configuration = require("./configurations/configuration.json");
 const tokenConfiguration = require("./configurations/token.json");
 const useProcessEnvIdentifier = "use_process_env";
@@ -68,13 +70,11 @@ const prefix = getConfiguration("prefix");
 const shipMaxAttempts = getConfiguration("shipMaxAttempts");
 const listMaxEntries = getConfiguration("listMaxEntries");
 const giveMaxAmount = getConfiguration("giveMaxAmount");
-const changelogFetchTimeout = getConfiguration("changelogFetchTimeout");
+const apiFetchTimeout = getConfiguration("apiFetchTimeout");
 const developerIDs = getConfiguration("developerIDs");
 const developmentGuildIDs = getConfiguration("developmentGuildIDs");
 const token = getConfiguration("token");
 const developmentEnvironment = getConfiguration("developmentEnvironment");
-const cliProcessTimeout = getConfiguration("cliProcessTimeout");
-const libraryMap = getLibraries();
 const remindmeMaxTimeStringLength = 100;
 // 100 is the limit for ms library, see https://github.com/zeit/ms/blob/2.1.1/index.js#L50
 const licenseInfoCooldown = 1000 * 60 * 30;
@@ -95,7 +95,10 @@ const repositoryString = "Original repository owned by DMCPlayer, no longer main
 const errorFetchingChangelogString = "Sorry, an error occured while fetching changelog. You can visit https://github.com/LightWayUp/chill/releases to see all changes.";
 const inviteString = "Invite ChillBot to other servers!\nhttps://discordapp.com/api/oauth2/authorize?client_id=511463919399731201&scope=bot&permissions=3136";
 const botUnavailableString = "Sorry, ChillBot is currently unavailable, most likely due to a new and not yet deployed update. Please check back later.";
-const changelogBaseURL = "https://api.github.com/repos/LightWayUp/chill/releases/";
+const githubAPIBaseURL = "https://api.github.com/";
+const changelogBaseURL = `${githubAPIBaseURL}repos/LightWayUp/chill/releases/`;
+const nodeLicenseURL = `${githubAPIBaseURL}repos/nodejs/node/license`
+const libraryList = getLibraries();
 
 const response = {
     eightBall: {
@@ -280,8 +283,9 @@ client.on("ready", () => {
                 if (reminderTimerList.length >= listMaxEntries && listMaxEntries > 0) {
                     clearTimeout(reminderTimerList.shift());
                 }
-                const matched = getMatchedOriginalFromArgs(message, args, 2);
-                const reminder = matched === null ? args.slice(2).join(" ") : message.content.substring(matched.length);
+                const usedArgsCount = 2;
+                const matched = getMatchedOriginalFromArgs(message, args, usedArgsCount);
+                const reminder = matched === null ? args.slice(usedArgsCount).join(" ") : message.content.substring(matched.length);
                 if (canSendMessages) {
                     messageToSend = "Timer set! \ud83d\udd5c";
                     channel.send(messageToSend)
@@ -332,8 +336,9 @@ client.on("ready", () => {
                             } else if (args.length === 3) {
                                 messageToSend = "Please provide an item!";
                             } else {
-                                const matched = getMatchedOriginalFromArgs(message, args, 3);
-                                item = matched === null ? args.slice(3).join(" ") : message.content.substring(matched.length);
+                                const usedArgsCount = 3;
+                                const matched = getMatchedOriginalFromArgs(message, args, usedArgsCount);
+                                item = matched === null ? args.slice(usedArgsCount).join(" ") : message.content.substring(matched.length);
                             }
                         }
                     }
@@ -420,13 +425,16 @@ client.on("ready", () => {
                     licenseInfoSentGuildList.delete(firstItemKey);
                 }
                 licenseInfoSentGuildList.set(guildID, [message.url, setTimeout(() => licenseInfoSentGuildList.delete(guildID), licenseInfoCooldown)]);
-                for (const libraryEntry of libraryMap) {
-                    const library = libraryEntry[0];
-                    const libraryVersion = libraryEntry[1];
-                    let messageToSend = libraryVersion === "" ? `${bold(library)}\nLicense:` : `${bold(library)}\nVersion: ${libraryVersion}\nLicense:`;
+                for (const library of libraryList) {
+                    const libraryName = library.name
+                    const libraryVersion = library.version;
+                    let messageToSend = `${bold(libraryName)}\nVersion: ${libraryVersion}\nLicense:`;
                     await channel.send(messageToSend, sendOptionsForLongMessage)
                         .then(async message => {
-                            messageToSend = require(`./licenses/${library}.js`).license;
+                            messageToSend = library.license;
+                            if (messageToSend === undefined) {
+                                messageToSend = "Unavailable";
+                            }
                             while (messageToSend.length > maxSafeMessageLength) {
                                 let partialMessage = messageToSend.substring(0, maxSafeMessageLength);
                                 const splitableIndex = partialMessage.lastIndexOf("\n");
@@ -471,9 +479,9 @@ client.on("ready", () => {
                     .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
                 https.get(`${changelogBaseURL}${tagName !== undefined ? `tags/${tagName}`: "latest"}`, {
                     headers: {
-                        "User-Agent": "ChillBot"
+                        "User-Agent": chillPackageJson.name
                     },
-                    timeout: changelogFetchTimeout
+                    timeout: apiFetchTimeout
                 }, response => {
                     const statusCode = response.statusCode;
                     const contentType = "content-type";
@@ -488,9 +496,10 @@ client.on("ready", () => {
                         return channel.send(errorFetchingChangelogString)
                             .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error}`));
                     }
-                    if (!(/^application\/.*json/gi.test(response.headers[contentType]))) {
+                    const receivedType = response.headers[contentType];
+                    if (!(/^application\/.*json/gi.test(receivedType))) {
                         response.resume();
-                        console.error(`Unable to get changelog, response ${contentType} does not match "application/json"!`);
+                        console.error(`Unable to get changelog, response content type "${receivedType}" does not match "application/json"!`);
                         return channel.send(errorFetchingChangelogString)
                             .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error}`));
                     }
@@ -530,7 +539,7 @@ client.on("ready", () => {
                             channel.send(errorFetchingChangelogString)
                             .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error}`));
                         }
-                    })
+                    });
                 });
                 break;
             }
@@ -682,15 +691,15 @@ function getConfiguration(configurationType) {
             break;
         }
 
-        case "changelogFetchTimeout": {
+        case "apiFetchTimeout": {
             if (result === useProcessEnvIdentifier) {
-                result = parseInt(process.env.BOT_CHANGELOG_FETCH_TIMEOUT, 10);
+                result = parseInt(process.env.BOT_API_FETCH_TIMEOUT, 10);
             }
             if (!(typeof result === "number" && isInteger(result.toString()))) {
-                throw new TypeError("Invalid changelogFetchTimeout value!");
+                throw new TypeError("Invalid apiFetchTimeout value!");
             }
             if (result <= 0) {
-                throw new Error("Invalid changelogFetchTimeout value, changelogFetchTimeout must not be less than or equal to 0!");
+                throw new Error("Invalid apiFetchTimeout value, apiFetchTimeout must not be less than or equal to 0!");
             }
             break;
         }
@@ -765,19 +774,6 @@ function getConfiguration(configurationType) {
             break;
         }
 
-        case "cliProcessTimeout": {
-            if (result === useProcessEnvIdentifier) {
-                result = parseInt(process.env.BOT_CLI_PROCESS_TIMEOUT, 10);
-            }
-            if (!(typeof result === "number" && isInteger(result.toString()))) {
-                throw new TypeError("Invalid cliProcessTimeout value!");
-            }
-            if (result <= 0) {
-                throw new Error("Invalid cliProcessTimeout value, cliProcessTimeout must not be less than or equal to 0!");
-            }
-            break;
-        }
-
         default: {
             throw new Error("Invalid configuration to fetch!");
         }
@@ -785,36 +781,97 @@ function getConfiguration(configurationType) {
     return result;
 }
 
-function getLibraries() {
-    const map = new Map().set("node", process.version);
-    let npmPath = path.resolve(path.dirname(process.argv[0]), (process.platform === "win32" ? "./npm.cmd" : "./npm"));
-    if (npmPath.includes(" ")) {
-        npmPath = `"${npmPath}"`;
+function NodeModule(name, version, license) {
+    if (!((typeof name === "string" || name instanceof String) && (version === undefined || version === null || typeof version === "string" || version instanceof String) && (license === undefined || license === null || typeof license === "string" || license instanceof String))) {
+        throw new TypeError("Incorrect type(s) for NodeModule arguments!");
     }
-    const npmProcess = childProcess.spawnSync(npmPath, ["-v"], {
-        timeout: cliProcessTimeout,
-        shell: true,
-        windowsHide: true
+    this.name = name;
+    this.version = version;
+    this.license = license;
+}
+
+function getModuleFromPath(directoryPath) {
+    if (!(typeof directoryPath === "string" || directoryPath instanceof String || directoryPath instanceof url.URL)) {
+        throw new TypeError("Incorrect type for getModuleFromPath argument!");
+    }
+    if (directoryPath instanceof url.URL) {
+        directoryPath = url.fileURLToPath(directoryPath);
+    }
+    if (!(fs.existsSync(directoryPath) && fs.statSync(directoryPath).isDirectory())) {
+        return;
+    }
+    const packageJsonPath = path.resolve(directoryPath, "./package.json");
+    if (!fs.existsSync(packageJsonPath)) {
+        return;
+    }
+    const packageJson = require(packageJsonPath);
+    const nodeModule = new NodeModule(packageJson.name, packageJson.version);
+    const foundLicensesPath = [];
+    const foundLicenses = fs.readdirSync(directoryPath).find(file => {
+        const filePath = path.resolve(directoryPath, `./${file}`);
+        if (fs.statSync(filePath).isFile() && /((licen(s|c)e(s)?)|(copying))(\.((md)|(txt))?)?/gi.test(file)) {
+            foundLicensesPath.push(filePath);
+            return true;
+        }
+        return false;
     });
-    let npmVersion = "";
-    if (npmProcess.error !== undefined && npmProcess.error !== null) {
-        console.error(`An error occured while attempting to read stdout of NPM process!\n\nFull details:\n${npmProcess.error}`);
-    } else {
-        const bufferString = npmProcess.stdout.toString();
-        if (/^\s*(\d+\.){2}\d+\s*$/gi.test(bufferString)) {
-            npmVersion = bufferString.trim();
+    if (foundLicenses !== undefined) {
+        nodeModule.license = fs.readFileSync(foundLicensesPath[0], "utf8").replace(/\r/gi, "");
+    }
+    return nodeModule;
+}
+
+function getLibraries() {
+    const libraries = [];
+    https.get(nodeLicenseURL, {
+        headers: {
+            "User-Agent": chillPackageJson.name,
+            "Accept": "application/vnd.github.v3.raw"
+        },
+        timeout: apiFetchTimeout
+    }, response => {
+        const statusCode = response.statusCode;
+        const contentType = "content-type";
+        if (statusCode !== 200) {
+            response.resume();
+            return console.error(`Unable to get LICENSE for nodejs/node, server responded with status code ${statusCode}!`);
+        }
+        const receivedType = response.headers[contentType];
+        if (!(/^application\/.*raw/gi.test(receivedType))) {
+            response.resume();
+            return console.error(`Unable to get LICENSE for nodejs/node, response content type "${receivedType}" does not match "application/vnd.github.v3.raw"!`);
+        }
+        let raw = "";
+        response.on("data", chunk => raw += chunk)
+        .on("error", error => {
+            console.error(`An error occured while attempting to fetch LICENSE for nodejs/node!\n\nFull details:\n${error}`);
+        }).on("end", () => {
+            if (!response.complete) {
+                return console.error("Unable to get LICENSE for nodejs/node, connection was terminated while response was still not fully received!");
+            }
+            libraries.unshift(new NodeModule("node", process.version, raw.replace(/\r/gi, "")));
+        });
+    });
+    const npm = getModuleFromPath(path.resolve(path.dirname(process.argv[0]), "./node_modules/npm"));
+    if (npm !== undefined) {
+        libraries.push(npm);
+    }
+    const mainModule = require.main;
+    if (mainModule === undefined) {
+        return libraries;
+    }
+    for (const nodeModulesPath of mainModule.paths) {
+        if (fs.existsSync(nodeModulesPath)) {
+            const contents = fs.readdirSync(nodeModulesPath);
+            for (const content of contents) {
+                const nodeModule = getModuleFromPath(path.resolve(nodeModulesPath, `./${content}`));
+                if (nodeModule !== undefined) {
+                    libraries.push(nodeModule);
+                }
+            }
         }
     }
-    map.set("npm", npmVersion);
-    for (const library in packageJSON.dependencies) {
-        map.set(library, packageJSON.dependencies[library]);
-    }
-    return map.set("async-limiter", "")
-    .set("long", "")
-    .set("prism-media", "")
-    .set("snekfetch", "")
-    .set("tweetnacl-js", "")
-    .set("ws", "");
+    return libraries;
 }
 
 function bold(string) {
