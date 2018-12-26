@@ -75,6 +75,7 @@ const developerIDs = getConfiguration("developerIDs");
 const developmentGuildIDs = getConfiguration("developmentGuildIDs");
 const token = getConfiguration("token");
 const developmentEnvironment = getConfiguration("developmentEnvironment");
+const cliProcessTimeout = getConfiguration("cliProcessTimeout");
 const remindmeMaxTimeStringLength = 100;
 // 100 is the limit for ms library, see https://github.com/zeit/ms/blob/2.1.1/index.js#L50
 const licenseInfoCooldown = 1000 * 60 * 30;
@@ -97,7 +98,6 @@ const inviteString = "Invite ChillBot to other servers!\nhttps://discordapp.com/
 const botUnavailableString = "Sorry, ChillBot is currently unavailable, most likely due to a new and not yet deployed update. Please check back later.";
 const githubAPIBaseURL = "https://api.github.com/";
 const changelogBaseURL = `${githubAPIBaseURL}repos/LightWayUp/chill/releases/`;
-const nodeLicenseURL = `${githubAPIBaseURL}repos/nodejs/node/license`
 const libraryList = getLibraries();
 
 const response = {
@@ -141,20 +141,7 @@ const response = {
 };
 
 if (process.env.RESTARTED !== undefined) {
-    console.log("This process was started by the previous process.");
-    if (restartTimeout >= 1000) {
-        const timeoutInSeconds = Math.floor(restartTimeout / 1000);
-        let waitString = ".".repeat(timeoutInSeconds);
-        console.log(waitString);
-        let i = 1;
-        const timerID = setInterval(() => {
-            waitString = "|" + waitString.substring(0, timeoutInSeconds - 1);
-            console.log(waitString);
-            if (i++ === timeoutInSeconds) {
-                clearInterval(timerID);
-            }
-        }, 1000);
-    }
+    console.log(`This process was started by the previous process. Logging in after ${restartTimeout}ms...`);
     setTimeout(() => login(), restartTimeout);
 } else {
     login();
@@ -409,7 +396,9 @@ client.on("ready", () => {
             }
 
             case "osslicenses":
-            case "opensourcelicenses": {
+            case "osslicences":
+            case "opensourcelicenses":
+            case "opensourcelicences": {
                 if (!canSendMessages || shouldReject) {
                     return;
                 }
@@ -425,16 +414,23 @@ client.on("ready", () => {
                     licenseInfoSentGuildList.delete(firstItemKey);
                 }
                 licenseInfoSentGuildList.set(guildID, [message.url, setTimeout(() => licenseInfoSentGuildList.delete(guildID), licenseInfoCooldown)]);
-                for (const library of libraryList) {
+                for (const library of await libraryList) {
                     const libraryName = library.name
                     const libraryVersion = library.version;
-                    let messageToSend = `${bold(libraryName)}\nVersion: ${libraryVersion}\nLicense:`;
+                    const libraryLicense = library.license;
+                    let messageToSend = bold(libraryName);
+                    if (libraryVersion !== undefined) {
+                        messageToSend += `\nVersion: ${libraryVersion}`;
+                    }
+                    if (libraryLicense !== undefined) {
+                        messageToSend += "\nLicense:";
+                    }
                     await channel.send(messageToSend, sendOptionsForLongMessage)
                         .then(async message => {
-                            messageToSend = library.license;
-                            if (messageToSend === undefined) {
-                                messageToSend = "Unavailable";
+                            if (libraryLicense === undefined) {
+                                return;
                             }
+                            messageToSend = libraryLicense;
                             while (messageToSend.length > maxSafeMessageLength) {
                                 let partialMessage = messageToSend.substring(0, maxSafeMessageLength);
                                 const splitableIndex = partialMessage.lastIndexOf("\n");
@@ -477,7 +473,7 @@ client.on("ready", () => {
                 messageToSend = "Fetching changelog...";
                 await channel.send(messageToSend)
                     .catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
-                https.get(`${changelogBaseURL}${tagName !== undefined ? `tags/${tagName}`: "latest"}`, {
+                const request = https.get(`${changelogBaseURL}${tagName !== undefined ? `tags/${tagName}`: "latest"}`, {
                     headers: {
                         "User-Agent": chillPackageJson.name
                     },
@@ -540,6 +536,11 @@ client.on("ready", () => {
                             .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error}`));
                         }
                     });
+                }).on("timeout", () => {
+                    request.abort();
+                    console.error("Unable to get changelog, request timed out!");
+                    channel.send(errorFetchingChangelogString)
+                    .catch(error => console.error(`An error occured while sending message "${errorFetchingChangelogString}"!\n\nFull details:\n${error}`));
                 });
                 break;
             }
@@ -774,6 +775,19 @@ function getConfiguration(configurationType) {
             break;
         }
 
+        case "cliProcessTimeout": {
+            if (result === useProcessEnvIdentifier) {
+                result = parseInt(process.env.BOT_CLI_PROCESS_TIMEOUT, 10);
+            }
+            if (!(typeof result === "number" && isInteger(result.toString()))) {
+                throw new TypeError("Invalid cliProcessTimeout value!");
+            }
+            if (result <= 0) {
+                throw new Error("Invalid cliProcessTimeout value, cliProcessTimeout must not be less than or equal to 0!");
+            }
+            break;
+        }
+
         default: {
             throw new Error("Invalid configuration to fetch!");
         }
@@ -788,6 +802,10 @@ function NodeModule(name, version, license) {
     this.name = name;
     this.version = version;
     this.license = license;
+}
+
+NodeModule.prototype.toString = function() {
+    return `${this.name}@${this.version}`;
 }
 
 function getModuleFromPath(directoryPath) {
@@ -806,10 +824,11 @@ function getModuleFromPath(directoryPath) {
     }
     const packageJson = require(packageJsonPath);
     const nodeModule = new NodeModule(packageJson.name, packageJson.version);
+    console.log(`Found package "${nodeModule}"`);
     const foundLicensesPath = [];
     const foundLicenses = fs.readdirSync(directoryPath).find(file => {
         const filePath = path.resolve(directoryPath, `./${file}`);
-        if (fs.statSync(filePath).isFile() && /((licen(s|c)e(s)?)|(copying))(\.((md)|(txt))?)?/gi.test(file)) {
+        if (fs.statSync(filePath).isFile() && /^((licen(s|c)e(s)?)|(copying))(\.((md)|(txt))?)?$/gi.test(file)) {
             foundLicensesPath.push(filePath);
             return true;
         }
@@ -821,41 +840,83 @@ function getModuleFromPath(directoryPath) {
     return nodeModule;
 }
 
-function getLibraries() {
-    const libraries = [];
-    https.get(nodeLicenseURL, {
-        headers: {
-            "User-Agent": chillPackageJson.name,
-            "Accept": "application/vnd.github.v3.raw"
-        },
-        timeout: apiFetchTimeout
-    }, response => {
-        const statusCode = response.statusCode;
-        const contentType = "content-type";
-        if (statusCode !== 200) {
-            response.resume();
-            return console.error(`Unable to get LICENSE for nodejs/node, server responded with status code ${statusCode}!`);
-        }
-        const receivedType = response.headers[contentType];
-        if (!(/^application\/.*raw/gi.test(receivedType))) {
-            response.resume();
-            return console.error(`Unable to get LICENSE for nodejs/node, response content type "${receivedType}" does not match "application/vnd.github.v3.raw"!`);
-        }
-        let raw = "";
-        response.on("data", chunk => raw += chunk)
-        .on("error", error => {
-            console.error(`An error occured while attempting to fetch LICENSE for nodejs/node!\n\nFull details:\n${error}`);
-        }).on("end", () => {
-            if (!response.complete) {
-                return console.error("Unable to get LICENSE for nodejs/node, connection was terminated while response was still not fully received!");
+function getLicenseByRepository(repository) {
+    if (!(typeof repository === "string" || repository instanceof String)) {
+        throw new TypeError("Incorrect type for getLicenseByRepository argument!");
+    }
+    if (!/^[^(/|\s)]+\/[^(/|\s)]+$/gi.test(repository)) {
+        throw new Error("Invalid repository name!");
+    }
+    return new Promise((resolve, reject) => {
+        const request = https.get(`${githubAPIBaseURL}repos/${repository}/license`, {
+            headers: {
+                "User-Agent": chillPackageJson.name,
+                "Accept": "application/vnd.github.v3.raw"
+            },
+            timeout: apiFetchTimeout
+        }, response => {
+            const statusCode = response.statusCode;
+            const contentType = "content-type";
+            if (statusCode !== 200) {
+                response.resume();
+                return reject(new Error(`Unable to get license for ${repository}, server responded with status code ${statusCode}!`));
             }
-            libraries.unshift(new NodeModule("node", process.version, raw.replace(/\r/gi, "")));
+            const receivedType = response.headers[contentType];
+            if (!(/^application\/.*raw/gi.test(receivedType))) {
+                response.resume();
+                return reject(new Error(`Unable to get license for ${repository}, response content type "${receivedType}" does not match "application/vnd.github.v3.raw"!`));
+            }
+            let raw = "";
+            response.on("data", chunk => raw += chunk)
+            .on("error", error => {
+                console.error(`An error occured while attempting to fetch license for ${repository}!\n\nFull details:\n${error}`);
+            }).on("end", () => {
+                if (!response.complete) {
+                    return reject(new Error(`Unable to get license for ${repository}, connection was terminated while response was still not fully received!`));
+                }
+                resolve(raw.replace(/\r/gi, ""));
+            });
+        }).on("timeout", () => {
+            request.abort();
+            reject(new Error(`Unable to get license for ${repository}, request timed out!`));
         });
     });
-    const npm = getModuleFromPath(path.resolve(path.dirname(process.argv[0]), "./node_modules/npm"));
-    if (npm !== undefined) {
-        libraries.push(npm);
+}
+
+async function getLibraries() {
+    const libraries = [];
+    let nodeLicense;
+    await getLicenseByRepository("nodejs/node")
+        .then(license => nodeLicense = license,
+        error => console.error(error));
+    libraries.push(new NodeModule("node", process.version, nodeLicense));
+    let npm = getModuleFromPath(path.resolve(path.dirname(process.argv[0]), "./node_modules/npm"));
+    if (npm === undefined) {
+        let npmPath = path.resolve(path.dirname(process.argv[0]), (process.platform === "win32" ? "./npm.cmd" : "./npm"));
+        if (npmPath.includes(" ")) {
+            npmPath = `"${npmPath}"`;
+        }
+        const npmProcess = childProcess.spawnSync(npmPath, ["-v"], {
+            timeout: cliProcessTimeout,
+            shell: true,
+            windowsHide: true
+        });
+        let npmVersion;
+        if (npmProcess.error !== undefined && npmProcess.error !== null) {
+            console.error(`An error occured while attempting to read stdout of NPM process!\n\nFull details:\n${npmProcess.error}`);
+        } else {
+            const bufferString = npmProcess.stdout.toString();
+            if (/^\s*(\d+\.){2}\d+\s*$/gi.test(bufferString)) {
+                npmVersion = bufferString.trim();
+            }
+        }
+        let npmLicense;
+        await getLicenseByRepository("npm/cli")
+            .then(license => npmLicense = license,
+            error => console.error(error));
+        npm = new NodeModule("npm", npmVersion, npmLicense);
     }
+    libraries.push(npm);
     const mainModule = require.main;
     if (mainModule === undefined) {
         return libraries;
