@@ -1,6 +1,6 @@
 {
   "name": "chillbot",
-  "version": "2.3.0-beta3",
+  "version": "2.3.0-beta.4",
   "description": "Chill!",
   "keywords": [
     "discord",
@@ -33,7 +33,7 @@
     "url": "https://github.com/LightWayUp/chill.git"
   },
   "scripts": {
-    "start": "node index.js",
+    "start": "node --throw-deprecation index.js",
     "test": "echo \"No test to run\" && exit 0"
   },
   "dependencies": {

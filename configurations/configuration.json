@@ -13,5 +13,6 @@
         "511620513643364353"
     ],
     "developmentEnvironment": false,
-    "cliProcessTimeout": 5000
+    "cliProcessTimeout": 5000,
+    "inviteURL": "https://discordapp.com/api/oauth2/authorize?client_id=511463919399731201&scope=bot&permissions=3136"
 }

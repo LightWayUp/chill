@@ -44,14 +44,19 @@ process.on("uncaughtException", error => {
     let shouldRestart = false;
     if (process.env.RESTARTED !== unexpectedRestartIdentifier) {
         for (const arg of process.argv) {
-            if (arg === "restartOnFatalError") {
+            if (/^\-{2}restart(\-|_)on(\-|_)fatal(\-|_)error$/g.test(arg)) {
                 shouldRestart = true;
                 break;
             }
         }
     }
     exitProcess(1, shouldRestart);
-});
+}).on("unhandledRejection", reason => {
+    handleGenerically(reason instanceof Error ? reason : new Error(reason));
+}).on("SIGHUP", () => exitProcess(0, false))
+.on("SIGINT", () => exitProcess(0, false))
+.on("SIGTERM", () => exitProcess(0, false))
+.on("SIGBREAK", () => exitProcess(0, false));
 
 const ms = require("ms");
 const https = require("https");
@@ -76,6 +81,7 @@ const developmentGuildIDs = getConfiguration("developmentGuildIDs");
 const token = getConfiguration("token");
 const developmentEnvironment = getConfiguration("developmentEnvironment");
 const cliProcessTimeout = getConfiguration("cliProcessTimeout");
+const inviteURL = getConfiguration("inviteURL");
 const remindmeMaxTimeStringLength = 100;
 // 100 is the limit for ms library, see https://github.com/zeit/ms/blob/2.1.1/index.js#L50
 const licenseInfoCooldown = 1000 * 60 * 30;
@@ -90,11 +96,11 @@ const sendOptionsForLongMessage = {
     }
 };
 
-const helpString = `Prefix: ${bold("/")}\n\n${bold("/help")},\n${bold("/ping")},\n${bold("/ship")} [me],\n(${bold("/reminder")}\|${bold("/remind")}\|${bold("/remindme")}) <time> <value>,\n${bold("/give")} <mention> <amount> <item>,\n(${bold("/eightball")}\|${bold("/8ball")}) <value>,\n(${bold("/source")}\|${bold("/github")}\|${bold("/repo")}\|${bold("/repository")}),\n${bold("/stop")},\n${bold("/restart")},\n${bold("/osslicenses")}\|${bold("/opensourcelicenses")},\n(${bold("/changes")}\|${bold("/changelog")}\|${bold("/changelogs")}) [tagName],\n${bold("/invite")}`;
+const helpString = `Prefix: ${bold("/")}\n\n${bold("/help")},\n${bold("/ping")},\n${bold("/ship")} [me],\n(${bold("/reminder")}\|${bold("/remind")}\|${bold("/remindme")}) <time> <value>,\n${bold("/give")} <mention> <amount> <item>,\n(${bold("/eightball")}\|${bold("/8ball")}) <value>,\n(${bold("/source")}\|${bold("/github")}\|${bold("/repo")}\|${bold("/repository")}),\n${bold("/stop")},\n${bold("/restart")},\n${bold("/osslicenses")}\|${bold("/osslicences")}\|${bold("/opensourcelicenses")}\|${bold("/opensourcelicences")},\n(${bold("/changes")}\|${bold("/changelog")}\|${bold("/changelogs")}) [tagName],\n${bold("/invite")}`;
 const dmUnavailableString = "I'm unable to send message to you in DM. Please make sure \"Allow direct messages from server members.\" is on in the \"Privacy & Safety\" settings in Discord settings!";
 const repositoryString = "Original repository owned by DMCPlayer, no longer maintained: https://github.com/DMCPlayer/chill\nForked repository owned by original ChillBot author VanishedApps, no longer maintained: https://github.com/VanishedApps/chill\nForked repository owned by LightWayUp, still maintained: https://github.com/LightWayUp/chill";
 const errorFetchingChangelogString = "Sorry, an error occured while fetching changelog. You can visit https://github.com/LightWayUp/chill/releases to see all changes.";
-const inviteString = "Invite ChillBot to other servers!\nhttps://discordapp.com/api/oauth2/authorize?client_id=511463919399731201&scope=bot&permissions=3136";
+const inviteString = inviteURL === undefined ? undefined : `Invite ChillBot to other servers!\n${inviteURL}`;
 const botUnavailableString = "Sorry, ChillBot is currently unavailable, most likely due to a new and not yet deployed update. Please check back later.";
 const githubAPIBaseURL = "https://api.github.com/";
 const changelogBaseURL = `${githubAPIBaseURL}repos/LightWayUp/chill/releases/`;
@@ -205,17 +211,12 @@ client.on("ready", () => {
                 const ping = client.ping;
                 const messageToSend = "Pinging.";
                 channel.send(bold(messageToSend))
-                .then(message => message.edit(bold("Pinging.."))
-                    .then(message => message.edit(bold("Pinging..."))
-                        .then(message => message.edit(bold("Pinging."))
-                            .then(message => message.edit(bold("Pinging.."))
-                                .then(message => message.edit(`${bold("Pong!")} ${code(`${ping < 0 ? "0" : ping.toFixed()} ms`)}`)
-                                    .catch(error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error}`)),
-                                error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error}`)),
-                            error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error}`)),
-                        error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error}`)),
-                    error => console.error(`An error occured while editing message "${message.content}"!\n\nFull details:\n${error}`)),
-                error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
+                .then(message => message.edit(bold("Pinging..")))
+                .then(message => message.edit(bold("Pinging...")))
+                .then(message => message.edit(bold("Pinging.")))
+                .then(message => message.edit(bold("Pinging..")))
+                .then(message => message.edit(`${bold("Pong!")} ${code(`${ping < 0 ? "0" : ping.toFixed()} ms`)}`))
+                .catch(error => console.error(`An error occured while sending or editing message for ping command!\n\nFull details:\n${error}`));
                 break;
             }
 
@@ -257,8 +258,12 @@ client.on("ready", () => {
                     timeout = ms(args[1]);
                     if (timeout === undefined) {
                         messageToSend = "You need to specify a valid time with unit!";
-                    } else if (timeout < 0) {
-                        messageToSend = "Time can not be negative!";
+                    } else if (timeout <= 0) {
+                        messageToSend = "Time can not be negative or 0!";
+                    } else if (timeout > 2147483647) {
+                        messageToSend = "The time is too large!";
+                        // 2147483647 is the maximum for Node.js setTimeout(),
+                        // see https://nodejs.org/api/timers.html#timers_settimeout_callback_delay_args
                     } else if (args.length === 2) {
                         messageToSend = `Please provide a value to remind you for. Example: ${code("/remindme 3d Do homework")}`;
                     }
@@ -426,7 +431,7 @@ client.on("ready", () => {
                         messageToSend += "\nLicense:";
                     }
                     await channel.send(messageToSend, sendOptionsForLongMessage)
-                        .then(async message => {
+                        .then(async () => {
                             if (libraryLicense === undefined) {
                                 return;
                             }
@@ -459,7 +464,7 @@ client.on("ready", () => {
                 let messageToSend;
                 let tagName;
                 if (args.length > 1) {
-                    if (/^v?((0|([1-9]\d*))\.){2}(0|([1-9]\d*))(\-((alpha)|(beta)|(rc))([1-9]\d*))?$/gi.test(args[1])) {
+                    if (/^v?((0|([1-9]\d*))\.){2}(0|([1-9]\d*))(\-((alpha)|(beta)|(rc))\.([1-9]\d*))?$/gi.test(args[1])) {
                         tagName = args[1].toLowerCase();
                         if (!tagName.startsWith("v")) {
                             tagName = `v${tagName}`;
@@ -546,7 +551,7 @@ client.on("ready", () => {
             }
 
             case "invite": {
-                if (!canSendMessages || shouldReject) {
+                if (!canSendMessages || shouldReject || inviteString === undefined) {
                     return;
                 }
                 channel.send(inviteString)
@@ -612,7 +617,7 @@ function exitProcess(exitCode, shouldRestart) {
         }
         if (!(client === undefined || client === null || client.user === undefined || client.user === null)) {
             client.user.setStatus("invisible")
-            .then(clientUser => client.destroy()
+            .then(() => client.destroy()
                 .catch(error => console.error(`An error occured while logging out!\n\nFull details:\n${error}`)),
             error => console.error(`An error occured while setting status!\n\nFull details:\n${error}`));
         }
@@ -788,6 +793,21 @@ function getConfiguration(configurationType) {
             break;
         }
 
+        case "inviteURL": {
+            if (result === useProcessEnvIdentifier) {
+                result = process.env.BOT_INVITE_URL;
+            } else if (!(result === undefined || result === null || typeof result === "string")) {
+                throw new TypeError("Invalid inviteURL value!");
+            }
+            if (typeof result === "string" && (result.length === 0 || result.includes(" "))) {
+                throw new Error("Invalid inviteURL value!");
+            }
+            if (result === null) {
+                result = undefined;
+            }
+            break;
+        }
+
         default: {
             throw new Error("Invalid configuration to fetch!");
         }
@@ -795,17 +815,18 @@ function getConfiguration(configurationType) {
     return result;
 }
 
-function NodeModule(name, version, license) {
-    if (!((typeof name === "string" || name instanceof String) && (version === undefined || version === null || typeof version === "string" || version instanceof String) && (license === undefined || license === null || typeof license === "string" || license instanceof String))) {
-        throw new TypeError("Incorrect type(s) for NodeModule arguments!");
+class NodeModule {
+    constructor(name, version, license) {
+        if (!((typeof name === "string" || name instanceof String) && (version === undefined || version === null || typeof version === "string" || version instanceof String) && (license === undefined || license === null || typeof license === "string" || license instanceof String))) {
+            throw new TypeError("Incorrect type(s) for NodeModule arguments!");
+        }
+        this.name = name;
+        this.version = version;
+        this.license = license;
     }
-    this.name = name;
-    this.version = version;
-    this.license = license;
-}
-
-NodeModule.prototype.toString = function() {
-    return `${this.name}@${this.version}`;
+    toString() {
+        return `${this.name}@${this.version}`;
+    }
 }
 
 function getModuleFromPath(directoryPath) {
@@ -871,10 +892,7 @@ function getLicenseByRepository(repository) {
             .on("error", error => {
                 console.error(`An error occured while attempting to fetch license for ${repository}!\n\nFull details:\n${error}`);
             }).on("end", () => {
-                if (!response.complete) {
-                    return reject(new Error(`Unable to get license for ${repository}, connection was terminated while response was still not fully received!`));
-                }
-                resolve(raw.replace(/\r/gi, ""));
+                response.complete ? resolve(raw.replace(/\r/gi, "")) : reject(new Error(`Unable to get license for ${repository}, connection was terminated while response was still not fully received!`));
             });
         }).on("timeout", () => {
             request.abort();
