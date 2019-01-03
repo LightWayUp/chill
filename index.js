@@ -82,17 +82,12 @@ const token = getConfiguration("token");
 const developmentEnvironment = getConfiguration("developmentEnvironment");
 const cliProcessTimeout = getConfiguration("cliProcessTimeout");
 const inviteURL = getConfiguration("inviteURL");
-const remindmeMaxTimeStringLength = 100;
-// 100 is the limit for ms library, see https://github.com/zeit/ms/blob/2.1.1/index.js#L50
-const licenseInfoCooldown = 1000 * 60 * 30;
 
 const reminderTimerList = [];
 const licenseInfoSentGuildList = new Map();
-const maxSafeMessageLength = 2000 - ("_***__~~```".length * 2);
 const sendOptionsForLongMessage = {
     split: {
-        char: " ",
-        maxLength: maxSafeMessageLength
+        char: " "
     }
 };
 
@@ -252,7 +247,8 @@ client.on("ready", () => {
                 let timeout;
                 if (args.length === 1) {
                     messageToSend = `Please provide a time in seconds, minutes, hours, days or months! Example: ${code("/remindme 3d Do homework")}`;
-                } else if (args[1].length > remindmeMaxTimeStringLength) {
+                } else if (args[1].length > 100) {
+                    // 100 is the limit for ms library, see https://github.com/zeit/ms/blob/2.1.1/index.js#L50
                     messageToSend = "The string of time you specified is too long!";
                 } else {
                     timeout = ms(args[1]);
@@ -418,7 +414,11 @@ client.on("ready", () => {
                     clearTimeout(licenseInfoSentGuildList.get(firstItemKey)[1]);
                     licenseInfoSentGuildList.delete(firstItemKey);
                 }
-                licenseInfoSentGuildList.set(guildID, [message.url, setTimeout(() => licenseInfoSentGuildList.delete(guildID), licenseInfoCooldown)]);
+                licenseInfoSentGuildList.set(guildID, [message.url, setTimeout(() => licenseInfoSentGuildList.delete(guildID), 1800000)]);
+                // 1800000 = 1000 * 60 * 30, the timeout is 30 minutes
+                const maxLength = 1950;
+                // 1950 is the default maximum character length per message piece,
+                // see https://discord.js.org/#/docs/main/stable/typedef/SplitOptions
                 for (const library of await libraryList) {
                     const libraryName = library.name
                     const libraryVersion = library.version;
@@ -436,11 +436,11 @@ client.on("ready", () => {
                                 return;
                             }
                             messageToSend = libraryLicense;
-                            while (messageToSend.length > maxSafeMessageLength) {
-                                let partialMessage = messageToSend.substring(0, maxSafeMessageLength);
+                            while (messageToSend.length > maxLength) {
+                                let partialMessage = messageToSend.substring(0, maxLength);
                                 const splitableIndex = partialMessage.lastIndexOf("\n");
                                 if (splitableIndex === -1) {
-                                    messageToSend = messageToSend.substring(maxSafeMessageLength);
+                                    messageToSend = messageToSend.substring(maxLength);
                                 } else {
                                     partialMessage = messageToSend.substring(0, splitableIndex);
                                     messageToSend = messageToSend.substring(splitableIndex + 1);
@@ -530,11 +530,7 @@ client.on("ready", () => {
                             const parsedTagName = parsed.tag_name;
                             const displayTagName = tagName === undefined ? (parsedTagName === undefined ? "latest": parsedTagName) : tagName;
                             messageToSend = `${bold(displayName)}\nRelease: ${displayTagName}\nChanges:\n${description}`;
-                            channel.send(messageToSend, {
-                                split: {
-                                    maxLength: maxSafeMessageLength
-                                }
-                            }).catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
+                            channel.send(messageToSend).catch(error => console.error(`An error occured while sending message "${messageToSend}"!\n\nFull details:\n${error}`));
                         } catch (error) {
                             console.error("Unable to get changelog, received data is not valid JSON!");
                             channel.send(errorFetchingChangelogString)

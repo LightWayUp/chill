@@ -18,7 +18,7 @@ The prefix is `/`.
 * `(source|github|repo|repository)` : Get information about ChillBot's source code repository.
 * `stop` : Stop the bot. This command is only available for developers of ChillBot.
 * `restart` : Restart the bot in a new instance of Node.js. This command is only available for developers of ChillBot.
-* `(osslicenses|opensourcelicenses)` : Get licenses information and notices about ChillBot's dependencies, used tools and JavaScript runtime.
+* `(osslicenses|osslicences|opensourcelicenses|opensourcelicences)` : Get licenses information and notices about ChillBot's dependencies, used tools and JavaScript runtime.
 * `(changes|changelog|changelogs) [tagName]` : Get changelog for the latest release. If "tagName" is present and corresponds to a release, get the changelog for the specific release.
 * `invite` : Get the link to invite ChillBot to a server.
 
